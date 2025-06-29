@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import '../styles/responsive.css'
-//
 export default function Layout({ children }) {
   const { user, logout, isAuthenticated } = useAuth()
   const [categories, setCategories] = useState([])
