@@ -676,6 +676,78 @@ export default function ProductsPage() {
           )}
         </div>
 
+        {/* Product Statistics */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            flex: '1',
+            backgroundColor: '#2196f3',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(33, 150, 243, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              {products.length}
+            </div>
+            <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+              PRODUCTS
+            </div>
+          </div>
+          
+          <div style={{
+            flex: '1',
+            backgroundColor: '#8bc34a',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(139, 195, 74, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              {categories.length}
+            </div>
+            <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+              CATEGORIES
+            </div>
+          </div>
+          
+          <div style={{
+            flex: '1',
+            backgroundColor: '#424242',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(66, 66, 66, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              {products.reduce((total, product) => total + (product.stock || 0), 0)}
+            </div>
+            <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+              TOTAL STOCK
+            </div>
+          </div>
+        </div>
+        
         {/* Results Header */}
         <div style={styles.resultsHeader}>
           <div style={styles.resultsCount}>
