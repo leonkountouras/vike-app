@@ -49,20 +49,24 @@ const port = process.env.PORT || 12001
 async function startServer() {
   const app = express()
 
+  // Trust proxy for rate limiting
+  app.set('trust proxy', 1)
+
   // Security middleware
   app.use(helmet({
     contentSecurityPolicy: false, // Disable for development
     crossOriginEmbedderPolicy: false
   }))
 
-  // Rate limiting
+  // Rate limiting with proper proxy configuration
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
     message: {
       success: false,
       message: 'Too many requests, please try again later'
-    }
+    },
+    trustProxy: true
   })
   app.use('/api/', limiter)
 
