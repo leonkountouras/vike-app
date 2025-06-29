@@ -2,12 +2,13 @@ Demo user created: demo@vikepress.com
 Initialized mock products for user ID: 1751134209911
 Initialized mock products for user ID: 1751134311621
 Initialized mock products for user ID: demo-user-id
-Production server running at http://localhost:12001
+Server running at http://localhost:12001
 ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
     at Object.xForwardedForHeader (file:///workspace/vike-app/node_modules/express-rate-limit/dist/index.mjs:157:13)
     at wrappedValidations.<computed> [as xForwardedForHeader] (file:///workspace/vike-app/node_modules/express-rate-limit/dist/index.mjs:369:22)
     at Object.keyGenerator (file:///workspace/vike-app/node_modules/express-rate-limit/dist/index.mjs:630:20)
     at file:///workspace/vike-app/node_modules/express-rate-limit/dist/index.mjs:682:32
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async file:///workspace/vike-app/node_modules/express-rate-limit/dist/index.mjs:663:5 {
   code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
   help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
