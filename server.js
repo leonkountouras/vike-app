@@ -38,6 +38,7 @@ import {
   getProductStats,
   getCategories,
   updateProductImage,
+  getPublicProducts,
   validateProduct,
   validateProductUpdate,
   upload 
@@ -114,6 +115,9 @@ async function startServer() {
   app.delete('/api/todos/:id', authenticateToken, deleteTodo)
   app.patch('/api/todos/:id/toggle', authenticateToken, toggleTodo)
 
+  // Public product route (no authentication required)
+  app.get('/api/products/public', getPublicProducts)
+  
   // Product routes (all protected)
   app.get('/api/products', authenticateToken, getProducts)
   app.post('/api/products', authenticateToken, upload.fields([

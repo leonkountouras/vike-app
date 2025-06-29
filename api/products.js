@@ -937,5 +937,96 @@ export const updateProductImage = (req, res) => {
   }
 }
 
+// Public endpoint to get products without authentication (for public frontend)
+export const getPublicProducts = (req, res) => {
+  try {
+    // For public access, we'll return mock products
+    let publicProducts = [...mockProducts]
+
+    // Apply filters
+    const { category, minPrice, maxPrice, sortBy, sortOrder, search } = req.query
+
+    // Filter by category
+    if (category && category !== 'all') {
+      publicProducts = publicProducts.filter(product => 
+        product.category.toLowerCase() === category.toLowerCase()
+      )
+    }
+
+    // Filter by price range
+    if (minPrice) {
+      publicProducts = publicProducts.filter(product => product.price >= parseFloat(minPrice))
+    }
+    if (maxPrice) {
+      publicProducts = publicProducts.filter(product => product.price <= parseFloat(maxPrice))
+    }
+
+    // Filter by search term
+    if (search) {
+      const searchTerm = search.toLowerCase()
+      publicProducts = publicProducts.filter(product =>
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description.toLowerCase().includes(searchTerm) ||
+        product.category.toLowerCase().includes(searchTerm) ||
+        product.sku.toLowerCase().includes(searchTerm)
+      )
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      publicProducts.sort((a, b) => {
+        let aValue, bValue
+        
+        switch (sortBy) {
+          case 'price':
+            aValue = a.price
+            bValue = b.price
+            break
+          case 'name':
+            aValue = a.name.toLowerCase()
+            bValue = b.name.toLowerCase()
+            break
+          case 'category':
+            aValue = a.category.toLowerCase()
+            bValue = b.category.toLowerCase()
+            break
+          case 'stock':
+            aValue = a.stock
+            bValue = b.stock
+            break
+          case 'createdAt':
+          default:
+            aValue = new Date(a.createdAt)
+            bValue = new Date(b.createdAt)
+            break
+        }
+
+        if (sortOrder === 'desc') {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+        } else {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+        }
+      })
+    } else {
+      // Default sort by creation date (newest first)
+      publicProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    }
+
+    res.json({
+      success: true,
+      data: { 
+        products: publicProducts,
+        total: publicProducts.length
+      }
+    })
+  } catch (error) {
+    console.error('Get public products error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    })
+  }
+}
+
 // Initialize mock products for all users on module load
 initializeMockProductsForAllUsers()
