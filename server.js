@@ -112,13 +112,22 @@ async function startServer() {
 
   // Product routes (all protected)
   app.get('/api/products', authenticateToken, getProducts)
-  app.post('/api/products', authenticateToken, upload.single('image'), validateProduct, createProduct)
+  app.post('/api/products', authenticateToken, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 10 }
+  ]), validateProduct, createProduct)
   app.get('/api/products/stats', authenticateToken, getProductStats)
   app.get('/api/products/categories', authenticateToken, getCategories)
   app.get('/api/products/:id', authenticateToken, getProduct)
-  app.put('/api/products/:id', authenticateToken, upload.single('image'), validateProductUpdate, updateProduct)
+  app.put('/api/products/:id', authenticateToken, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 10 }
+  ]), validateProductUpdate, updateProduct)
   app.delete('/api/products/:id', authenticateToken, deleteProduct)
-  app.patch('/api/products/:id/image', authenticateToken, upload.single('image'), updateProductImage)
+  app.patch('/api/products/:id/image', authenticateToken, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 10 }
+  ]), updateProductImage)
 
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'))
