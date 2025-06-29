@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../components/AuthContext'
 import Layout from '../../components/Layout'
 import '../../styles/responsive.css'
@@ -546,28 +547,68 @@ export default function ProductsPage() {
 
   return (
     <Layout>
-      <div style={styles.container} className="products-container">
+      <motion.div 
+        style={styles.container} 
+        className="products-container"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Header */}
-        <div style={styles.header} className="products-header">
-          <div>
-            <h1 style={styles.title} className="products-title">🛍️ Product Catalog</h1>
-            <p style={styles.subtitle}>Browse and filter your product inventory</p>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button 
+        <motion.div 
+          style={styles.header} 
+          className="products-header"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <motion.h1 
+              style={styles.title} 
+              className="products-title"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              🛍️ Product Catalog
+            </motion.h1>
+            <motion.p 
+              style={styles.subtitle}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              Browse and filter your product inventory
+            </motion.p>
+          </motion.div>
+          <motion.div 
+            style={{ display: 'flex', gap: '1rem' }}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 1 }}
+          >
+            <motion.button 
               style={styles.createButton}
               onClick={() => window.location.href = '/products/create'}
+              whileHover={{ scale: 1.05, backgroundColor: '#218838' }}
+              whileTap={{ scale: 0.95 }}
             >
               ➕ Add Product
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
               style={{...styles.createButton, backgroundColor: '#007bff'}}
               onClick={() => window.location.href = '/products/categories'}
+              whileHover={{ scale: 1.05, backgroundColor: '#0056b3' }}
+              whileTap={{ scale: 0.95 }}
             >
               🏷️ Manage Categories
-            </button>
-          </div>
-        </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
 
         {/* Filters */}
         <div style={styles.filtersContainer} className="products-filters">
@@ -783,18 +824,43 @@ export default function ProductsPage() {
             )}
           </div>
         ) : (
-          <div style={styles.productsGrid} className="products-grid">
-            {products.map(product => {
-              const stockStatus = getStockStatus(product.stock)
-              return (
-                <div
-                  key={product.id}
-                  style={styles.productCard}
-                  className="product-card"
-                  onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.productCardHover)}
-                  onMouseLeave={(e) => Object.assign(e.currentTarget.style, styles.productCard)}
-                  onClick={() => window.location.href = `/products/${product.id}`}
-                >
+          <motion.div 
+            style={styles.productsGrid} 
+            className="products-grid"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            layout
+          >
+            <AnimatePresence mode="wait">
+              {products.map((product, index) => {
+                const stockStatus = getStockStatus(product.stock)
+                return (
+                  <motion.div
+                    key={product.id}
+                    style={styles.productCard}
+                    className="product-card"
+                    initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: -50 }}
+                    transition={{ 
+                      duration: 0.5, 
+                      delay: index * 0.1,
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 15
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      y: -10,
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+                      transition: { duration: 0.3 }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => window.location.href = `/products/${product.id}`}
+                    layout
+                    layoutId={product.id}
+                  >
                   {product.featured && (
                     <div style={styles.featuredBadge}>⭐ Featured</div>
                   )}
@@ -859,12 +925,13 @@ export default function ProductsPage() {
                       </button>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </Layout>
   )
 }

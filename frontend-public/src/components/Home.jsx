@@ -1,7 +1,8 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import Header from './Header'
 import Hero from './Hero'
-import Products from './Products'
+import ProductsAnimated from './ProductsAnimated'
 import About from './About'
 import Contact from './Contact'
 import Footer from './Footer'
@@ -19,16 +20,26 @@ const Home = () => {
   }
 
   return (
-    <div style={styles.app}>
+    <motion.div 
+      style={styles.app}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <Header />
-      <main style={styles.main}>
+      <motion.main 
+        style={styles.main}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
         <Hero />
-        <Products />
+        <ProductsAnimated />
         <About />
         <Contact />
-      </main>
+      </motion.main>
       <Footer />
-    </div>
+    </motion.div>
   )
 }
 

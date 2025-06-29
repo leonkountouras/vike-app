@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -179,118 +180,192 @@ const Header = () => {
   return (
     <>
       <style>{mediaStyles}</style>
-      <header style={styles.header}>
+      <motion.header 
+        style={styles.header}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <div className="container">
-          <nav style={styles.nav}>
-            <a href="#home" style={styles.logo} onClick={(e) => { e.preventDefault(); handleNavClick('#home') }}>
+          <motion.nav 
+            style={styles.nav}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <motion.a 
+              href="#home" 
+              style={styles.logo} 
+              onClick={(e) => { e.preventDefault(); handleNavClick('#home') }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               🛍️ ProductHub
-            </a>
+            </motion.a>
             
             {/* Desktop Navigation */}
-            <ul style={styles.navLinks} className="nav-links">
+            <motion.ul 
+              style={styles.navLinks} 
+              className="nav-links"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
               {navItems.map((item, index) => (
-                <li key={index}>
-                  <a
+                <motion.li 
+                  key={index}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                >
+                  <motion.a
                     href={item.href}
                     style={styles.navLink}
                     onClick={(e) => { e.preventDefault(); handleNavClick(item.href) }}
-                    onMouseEnter={(e) => {
-                      Object.assign(e.target.style, styles.navLinkHover)
+                    whileHover={{ 
+                      scale: 1.1,
+                      color: "#007bff",
+                      transition: { duration: 0.2 }
                     }}
-                    onMouseLeave={(e) => {
-                      Object.assign(e.target.style, styles.navLink)
-                    }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     {item.label}
-                  </a>
-                </li>
+                  </motion.a>
+                </motion.li>
               ))}
-              <li>
-                <a
+              <motion.li
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <motion.a
                   href="http://localhost:12001/login"
                   style={styles.ctaButton}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onMouseEnter={(e) => {
-                    Object.assign(e.target.style, { ...styles.ctaButton, ...styles.ctaButtonHover })
+                  whileHover={{ 
+                    scale: 1.05,
+                    backgroundColor: "#0056b3",
+                    boxShadow: "0 4px 15px rgba(0, 123, 255, 0.4)",
+                    transition: { duration: 0.2 }
                   }}
-                  onMouseLeave={(e) => {
-                    Object.assign(e.target.style, styles.ctaButton)
-                  }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   🔐 Admin Login
-                </a>
-              </li>
-            </ul>
+                </motion.a>
+              </motion.li>
+            </motion.ul>
 
             {/* Hamburger Menu */}
-            <button
+            <motion.button
               style={styles.hamburger}
               className="hamburger"
               onClick={toggleMenu}
               aria-label="Toggle menu"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
             >
-              <span
+              <motion.span
                 style={{
                   ...styles.hamburgerLine,
                   ...(isMenuOpen ? styles.hamburgerLineOpen1 : {})
                 }}
-              ></span>
-              <span
+                animate={isMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.3 }}
+              ></motion.span>
+              <motion.span
                 style={{
                   ...styles.hamburgerLine,
                   ...(isMenuOpen ? styles.hamburgerLineOpen2 : {})
                 }}
-              ></span>
-              <span
+                animate={isMenuOpen ? { opacity: 0 } : { opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              ></motion.span>
+              <motion.span
                 style={{
                   ...styles.hamburgerLine,
                   ...(isMenuOpen ? styles.hamburgerLineOpen3 : {})
                 }}
-              ></span>
-            </button>
+                animate={isMenuOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.3 }}
+              ></motion.span>
+            </motion.button>
 
             {/* Mobile Menu */}
-            <div style={styles.mobileMenu} className="mobile-menu">
-              <ul style={styles.mobileNavLinks}>
-                {navItems.map((item, index) => (
-                  <li key={index}>
-                    <a
-                      href={item.href}
-                      style={styles.mobileNavLink}
-                      onClick={(e) => { e.preventDefault(); handleNavClick(item.href) }}
-                      onMouseEnter={(e) => {
-                        Object.assign(e.target.style, styles.mobileNavLinkHover)
-                      }}
-                      onMouseLeave={(e) => {
-                        Object.assign(e.target.style, styles.mobileNavLink)
-                      }}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-                <li style={{ padding: '1rem 2rem' }}>
-                  <a
-                    href="http://localhost:12001/login"
-                    style={styles.ctaButton}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onMouseEnter={(e) => {
-                      Object.assign(e.target.style, { ...styles.ctaButton, ...styles.ctaButtonHover })
-                    }}
-                    onMouseLeave={(e) => {
-                      Object.assign(e.target.style, styles.ctaButton)
-                    }}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div 
+                  style={styles.mobileMenu} 
+                  className="mobile-menu"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <motion.ul 
+                    style={styles.mobileNavLinks}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, delay: 0.1 }}
                   >
-                    🔐 Admin Login
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </nav>
+                    {navItems.map((item, index) => (
+                      <motion.li 
+                        key={index}
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <motion.a
+                          href={item.href}
+                          style={styles.mobileNavLink}
+                          onClick={(e) => { e.preventDefault(); handleNavClick(item.href) }}
+                          whileHover={{ 
+                            backgroundColor: "#f8f9fa",
+                            color: "#007bff",
+                            x: 10,
+                            transition: { duration: 0.2 }
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {item.label}
+                        </motion.a>
+                      </motion.li>
+                    ))}
+                    <motion.li 
+                      style={{ padding: '1rem 2rem' }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                    >
+                      <motion.a
+                        href="http://localhost:12001/login"
+                        style={styles.ctaButton}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ 
+                          scale: 1.05,
+                          backgroundColor: "#0056b3",
+                          boxShadow: "0 4px 15px rgba(0, 123, 255, 0.4)",
+                          transition: { duration: 0.2 }
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        🔐 Admin Login
+                      </motion.a>
+                    </motion.li>
+                  </motion.ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.nav>
         </div>
-      </header>
+      </motion.header>
     </>
   )
 }
