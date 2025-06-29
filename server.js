@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { createServer as createViteServer } from 'vite'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -145,17 +146,18 @@ async function startServer() {
     res.sendFile(path.join(__dirname, 'test-login.html'))
   })
 
+  let vite
   if (isProduction) {
     // In production, serve static files
     app.use(express.static('dist/client'))
   } else {
-    // In development, use Vite's dev server
-    const { createServer } = await import('vite')
-    const viteDevServer = await createServer({
+    // In development, use Vite dev server
+    vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'custom'
+      appType: 'custom',
+      root: __dirname
     })
-    app.use(viteDevServer.middlewares)
+    app.use(vite.middlewares)
   }
 
   // Vike middleware
@@ -163,6 +165,11 @@ async function startServer() {
     try {
       const pageContextInit = {
         urlOriginal: req.originalUrl
+      }
+      
+      // In development, pass the Vite instance to renderPage
+      if (!isProduction && vite) {
+        pageContextInit.viteDevServer = vite
       }
       
       const pageContext = await renderPage(pageContextInit)

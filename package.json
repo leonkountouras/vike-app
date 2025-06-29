@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "build": "vite build",
+    "dev": "vike dev",
+    "dev-custom": "node server.js",
+    "build": "vike build",
     "start": "NODE_ENV=production node server-production.js",
     "preview": "npm run build && npm run start",
     "dev:prod": "NODE_ENV=production node server.js"
