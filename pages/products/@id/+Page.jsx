@@ -814,7 +814,6 @@ export default function ProductDetailPage() {
 
         {/* Image Modal */}
         {showImageModal && (
-
           <div style={styles.imageModal} onClick={() => setShowImageModal(false)}>
             <button style={styles.closeModalButton} onClick={() => setShowImageModal(false)}>✕</button>
             <img
@@ -824,7 +823,6 @@ export default function ProductDetailPage() {
             />
           </div>
         )}
-      </div>
     </Layout>
   )
 }
