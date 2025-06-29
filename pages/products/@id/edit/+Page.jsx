@@ -232,6 +232,10 @@ export default function EditProductPage() {
     featured: false,
     status: 'active'
   })
+  
+  const [productImages, setProductImages] = useState([])
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [hoveredImageIndex, setHoveredImageIndex] = useState(null)
 
   useEffect(() => {
     // Get product ID from URL on client side
@@ -283,6 +287,35 @@ export default function EditProductPage() {
           featured: productData.featured || false,
           status: productData.status || 'active'
         })
+        
+        // Handle product images
+        const images = [];
+        
+        // Add main image if it exists
+        if (productData.image) {
+          images.push({
+            preview: productData.image,
+            isExisting: true,
+            path: productData.image
+          });
+        }
+        
+        // Add additional images if they exist
+        if (productData.images && productData.images.length > 0) {
+          // Skip the first image if it's the same as the main image
+          const additionalImages = productData.images.filter(img => img !== productData.image);
+          
+          additionalImages.forEach(imagePath => {
+            images.push({
+              preview: imagePath,
+              isExisting: true,
+              path: imagePath
+            });
+          });
+        }
+        
+        setProductImages(images);
+        setSelectedImageIndex(0); // Set the main image as selected
       } else {
         setError(data.message || 'Failed to fetch product')
       }
@@ -322,6 +355,79 @@ export default function EditProductPage() {
       [name]: type === 'checkbox' ? checked : value
     }))
   }
+  
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+    
+    files.forEach(file => {
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProductImages(prevImages => [
+          ...prevImages,
+          {
+            file: file,
+            preview: reader.result,
+            isNew: true
+          }
+        ])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+  
+  const handleMultipleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+    
+    files.forEach(file => {
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProductImages(prevImages => [
+          ...prevImages,
+          {
+            file: file,
+            preview: reader.result,
+            isNew: true
+          }
+        ])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+  
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIndex(index)
+  }
+  
+  const handleRemoveImage = (index, e) => {
+    e.stopPropagation()
+    
+    setProductImages(prevImages => {
+      const newImages = [...prevImages]
+      newImages.splice(index, 1)
+      
+      // Adjust selected index if needed
+      if (selectedImageIndex >= newImages.length) {
+        setSelectedImageIndex(Math.max(0, newImages.length - 1))
+      } else if (index === selectedImageIndex && newImages.length > 0) {
+        // Keep the same selected index unless we removed the selected image
+        setSelectedImageIndex(0)
+      }
+      
+      return newImages
+    })
+  }
+  
+  const handleMouseEnter = (index) => {
+    setHoveredImageIndex(index)
+  }
+  
+  const handleMouseLeave = () => {
+    setHoveredImageIndex(null)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -330,17 +436,59 @@ export default function EditProductPage() {
     setSuccess('')
 
     try {
+      // Create FormData object for multipart/form-data (needed for file uploads)
+      const formDataObj = new FormData()
+      
+      // Add all form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataObj.append(key, value)
+      })
+      
+      // Convert numeric fields
+      formDataObj.set('price', parseFloat(formData.price))
+      formDataObj.set('stock', parseInt(formData.stock))
+      
+      // Add featured image index
+      formDataObj.append('featuredImageIndex', selectedImageIndex)
+      
+      // Add images if selected
+      if (productImages.length > 0) {
+        // Add the featured image first (the selected one)
+        if (productImages[selectedImageIndex]) {
+          const selectedImage = productImages[selectedImageIndex]
+          
+          if (selectedImage.isNew && selectedImage.file) {
+            formDataObj.append('featuredImage', selectedImage.file)
+          } else if (selectedImage.isExisting) {
+            // If it's an existing image, send the path
+            formDataObj.append('featuredImagePath', selectedImage.path)
+          }
+        }
+        
+        // Add all other new images
+        productImages.forEach((img, index) => {
+          if (index !== selectedImageIndex && img.isNew && img.file) {
+            formDataObj.append('additionalImages', img.file)
+          }
+        })
+        
+        // Add paths of existing images that should be kept
+        const existingImagePaths = productImages
+          .filter((img, index) => index !== selectedImageIndex && img.isExisting)
+          .map(img => img.path)
+        
+        if (existingImagePaths.length > 0) {
+          formDataObj.append('existingAdditionalImages', JSON.stringify(existingImagePaths))
+        }
+        
+        // Add the selected index as metadata
+        formDataObj.append('featuredImageIndex', selectedImageIndex)
+      }
+      
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock)
-        })
+        headers: getAuthHeaders(true), // Skip content-type for FormData
+        body: formDataObj
       })
 
       if (!response.ok) {
@@ -580,17 +728,183 @@ export default function EditProductPage() {
             </div>
           </div>
 
-          {/* Current Image Display */}
-          {product.image && (
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Current Image</label>
-              <img 
-                src={product.image} 
-                alt={product.name}
-                style={styles.imagePreview}
-              />
+          {/* Product Images */}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Product Images</label>
+            <div style={{marginBottom: '1rem'}}>
+              <div style={{
+                width: '200px',
+                height: '200px',
+                border: '2px dashed #e9ecef',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                position: 'relative',
+                marginBottom: '1rem'
+              }}>
+                {productImages.length > 0 && selectedImageIndex < productImages.length ? (
+                  <img 
+                    src={productImages[selectedImageIndex].preview} 
+                    alt="Featured Preview" 
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }} 
+                  />
+                ) : (
+                  <div style={{
+                    color: '#6c757d',
+                    fontSize: '1rem',
+                    textAlign: 'center'
+                  }}>
+                    <p>No images available</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMultipleImageUpload}
+                      style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0,
+                        cursor: 'pointer'
+                      }}
+                      multiple
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div style={{...styles.formGroup, marginTop: '1rem'}}>
+                <label style={styles.label}>Featured Image</label>
+                <p style={{fontSize: '0.9rem', color: '#6c757d', marginBottom: '0.5rem'}}>
+                  Click on an image to set it as the featured image (main product image)
+                </p>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '10px',
+                marginTop: '10px'
+              }}>
+                {productImages.map((image, index) => (
+                  <div 
+                    key={index}
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      border: index === selectedImageIndex ? '2px solid #28a745' : '2px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: index === selectedImageIndex ? '0 0 0 2px rgba(40, 167, 69, 0.5)' : 'none'
+                    }}
+                    onClick={() => handleThumbnailClick(index)}
+                    onMouseEnter={() => handleMouseEnter(index)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    {index === selectedImageIndex && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '5px',
+                        left: '5px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        fontSize: '10px',
+                        padding: '2px 5px',
+                        borderRadius: '3px',
+                        zIndex: 1
+                      }}>Featured</div>
+                    )}
+                    <img 
+                      src={image.preview} 
+                      alt={`Thumbnail ${index + 1}`} 
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }} 
+                    />
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        opacity: hoveredImageIndex === index ? 1 : 0,
+                        transition: 'opacity 0.2s ease'
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        gap: '5px'
+                      }}>
+                        <button 
+                          type="button"
+                          style={{
+                            backgroundColor: 'white',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                          onClick={(e) => handleRemoveImage(index, e)}
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <label style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '8px',
+                  border: '2px dashed #e9ecef',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  color: '#6c757d',
+                  fontSize: '24px'
+                }} title="Add more images">
+                  +
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                    multiple
+                  />
+                </label>
+              </div>
+              
+              {productImages.length > 0 && (
+                <div style={{marginTop: '1rem', fontSize: '0.9rem', color: '#28a745'}}>
+                  {productImages.length} image(s) selected. The highlighted image will be used as the featured product image.
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div style={styles.buttonGroup}>
             <button

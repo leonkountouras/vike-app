@@ -376,6 +376,26 @@ export default function CreateProductPage() {
     })
   }
   
+  const handleMultipleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+    
+    files.forEach(file => {
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProductImages(prevImages => [
+          ...prevImages,
+          {
+            file: file,
+            preview: reader.result
+          }
+        ])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+  
   const handleThumbnailClick = (index) => {
     setSelectedImageIndex(index)
   }
@@ -726,9 +746,23 @@ export default function CreateProductPage() {
                     />
                   ) : (
                     <div style={styles.previewPlaceholder}>
-                      Select or upload images to see preview
+                      <p>Select or upload images to see preview</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleMultipleImageUpload}
+                        style={styles.fileInput}
+                        multiple
+                      />
                     </div>
                   )}
+                </div>
+                
+                <div style={{...styles.formGroup, marginTop: '1rem'}}>
+                  <label style={styles.label}>Featured Image</label>
+                  <p style={{fontSize: '0.9rem', color: '#6c757d', marginBottom: '0.5rem'}}>
+                    Click on an image to set it as the featured image (main product image)
+                  </p>
                 </div>
                 
                 <div style={styles.thumbnailsContainer}>
@@ -782,6 +816,12 @@ export default function CreateProductPage() {
                     />
                   </label>
                 </div>
+                
+                {productImages.length > 0 && (
+                  <div style={{marginTop: '1rem', fontSize: '0.9rem', color: '#28a745'}}>
+                    {productImages.length} image(s) selected. The highlighted image will be used as the featured product image.
+                  </div>
+                )}
               </div>
             </div>
             
