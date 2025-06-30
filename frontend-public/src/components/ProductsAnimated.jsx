@@ -186,6 +186,18 @@ const ProductsAnimated = () => {
     }
   }
 
+  // Isotope-like grid animation settings
+  const gridVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.03,
+        duration: 0.5
+      }
+    }
+  }
+
   const cardVariants = {
     hidden: { 
       opacity: 0, 
@@ -293,9 +305,11 @@ const ProductsAnimated = () => {
       fontSize: '1rem',
       fontWeight: '600',
       cursor: 'pointer',
-      transition: 'all 0.2s ease',
       outline: 'none',
-      background: 'white'
+      background: 'white',
+      position: 'relative',
+      margin: '0.5rem',
+      zIndex: 1
     },
     searchInput: {
       padding: '0.75rem 1rem',
@@ -311,7 +325,9 @@ const ProductsAnimated = () => {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
       gap: '2rem',
-      marginBottom: '2rem'
+      marginBottom: '2rem',
+      minHeight: '500px', // Add minimum height to prevent layout shifts
+      position: 'relative'
     },
     productCard: {
       background: 'white',
@@ -447,6 +463,18 @@ const ProductsAnimated = () => {
     )
   }
 
+  // Add CSS for isotope-like animation
+  const isotopeStyles = `
+    .isotope-grid {
+      perspective: 1000px;
+    }
+    
+    .isotope-grid > div {
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+    }
+  `
+
   return (
     <motion.section 
       id="products" 
@@ -455,6 +483,7 @@ const ProductsAnimated = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      <style>{isotopeStyles}</style>
       <div style={styles.container}>
         <motion.div 
           style={styles.header}
@@ -503,7 +532,11 @@ const ProductsAnimated = () => {
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           {/* Category Filter Buttons */}
-          <div style={styles.categoryFilters}>
+          <motion.div 
+            style={styles.categoryFilters}
+            layout
+            transition={{ duration: 0.5 }}
+          >
             {categories.map((category) => (
               <motion.button
                 key={category}
@@ -514,11 +547,31 @@ const ProductsAnimated = () => {
                 whileHover="hover"
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory(category)}
+                layout
+                transition={{
+                  layout: { type: "spring", stiffness: 300, damping: 25 },
+                  scale: { type: "spring", stiffness: 400, damping: 17 }
+                }}
               >
                 {category}
+                {selectedCategory === category && (
+                  <motion.div
+                    style={{
+                      position: 'absolute',
+                      bottom: -2,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      backgroundColor: '#007bff',
+                      borderRadius: 2
+                    }}
+                    layoutId="activeCategory"
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  />
+                )}
               </motion.button>
             ))}
-          </div>
+          </motion.div>
 
           {/* Search Input */}
           <motion.input
@@ -558,11 +611,13 @@ const ProductsAnimated = () => {
         ) : (
           <motion.div 
             style={styles.productsGrid}
-            variants={containerVariants}
+            variants={gridVariants}
             initial="hidden"
             animate="visible"
+            layout
+            className="isotope-grid"
           >
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {filteredProducts.map((product) => {
                 const stockStatus = getStockStatus(product.stock)
                 
@@ -575,6 +630,10 @@ const ProductsAnimated = () => {
                     animate="visible"
                     exit="exit"
                     whileHover="hover"
+                    layout
+                    transition={{
+                      layout: { type: "spring", stiffness: 300, damping: 30 }
+                    }}
                   >
                     {product.featured && (
                       <motion.div 
