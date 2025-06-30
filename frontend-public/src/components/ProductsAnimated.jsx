@@ -155,8 +155,10 @@ const ProductsAnimated = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
+        staggerChildren: 0.05, // Reduced stagger time
+        delayChildren: 0.1,    // Reduced delay
+        duration: 0.3,         // Added duration
+        ease: "easeOut"        // Added easing
       }
     }
   }
@@ -172,9 +174,9 @@ const ProductsAnimated = () => {
       scale: 1,
       y: 0,
       transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15
+        type: "tween", // Changed from spring to tween for more stability
+        duration: 0.5,
+        ease: "easeOut"
       }
     },
     exit: {
@@ -186,12 +188,12 @@ const ProductsAnimated = () => {
       }
     },
     hover: {
-      scale: 1.05,
-      y: -10,
+      scale: 1.03, // Reduced scale effect
+      y: -5, // Reduced y movement
       transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 20
+        type: "tween", // Changed from spring to tween
+        duration: 0.2,
+        ease: "easeOut"
       }
     }
   }
@@ -536,9 +538,8 @@ const ProductsAnimated = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            layout
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {filteredProducts.map((product) => {
                 const stockStatus = getStockStatus(product.stock)
                 
@@ -551,8 +552,6 @@ const ProductsAnimated = () => {
                     animate="visible"
                     exit="exit"
                     whileHover="hover"
-                    layout
-                    layoutId={product.id}
                   >
                     {product.featured && (
                       <motion.div 
