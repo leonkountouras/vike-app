@@ -14,43 +14,66 @@ const ProductsAnimated = () => {
   const API_BASE_URL = 'https://work-2-qrsolblshsmgtweg.prod-runtime.all-hands.dev'
 
   useEffect(() => {
-    fetchProducts()
+    fetchProductsAndCategories()
   }, [])
 
   useEffect(() => {
     filterProducts()
   }, [products, selectedCategory, searchTerm])
 
-  const fetchProducts = async () => {
+  const fetchProductsAndCategories = async () => {
     try {
       setLoading(true)
       setError('')
       
-      const response = await fetch(`${API_BASE_URL}/api/products/public`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+      // Fetch products and categories in parallel
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/products/public`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`${API_BASE_URL}/api/categories/public`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
       
-      if (!response.ok) {
+      // Handle products response
+      if (!productsResponse.ok) {
         throw new Error('Failed to fetch products')
       }
       
-      const data = await response.json()
+      const productsData = await productsResponse.json()
       
-      if (data.success) {
-        const productList = data.data.products || []
+      if (productsData.success) {
+        const productList = productsData.data.products || []
         setProducts(productList)
+      } else {
+        setError(productsData.message || 'Failed to load products')
+      }
+      
+      // Handle categories response
+      if (categoriesResponse.ok) {
+        const categoriesData = await categoriesResponse.json()
         
-        // Extract unique categories
+        if (categoriesData.success) {
+          const categoryList = categoriesData.data.categories || []
+          const categoryNames = categoryList.map(cat => cat.name)
+          setCategories(categoryNames)
+        }
+      } else {
+        console.error('Failed to fetch categories, falling back to extracting from products')
+        // Fallback: Extract categories from products
+        const productList = productsData.success ? productsData.data.products || [] : []
         const uniqueCategories = ['All', ...new Set(productList.map(p => p.category))]
         setCategories(uniqueCategories)
-      } else {
-        setError(data.message || 'Failed to load products')
       }
     } catch (err) {
-      console.error('Error fetching products:', err)
+      console.error('Error fetching data:', err)
       // For demo purposes, let's use mock data if the API fails
       const mockProducts = getMockProducts()
       setProducts(mockProducts)
@@ -155,8 +178,10 @@ const ProductsAnimated = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
+        staggerChildren: 0.05, // Reduced stagger time
+        delayChildren: 0.1,    // Reduced delay
+        duration: 0.3,         // Added duration
+        ease: "easeOut"        // Added easing
       }
     }
   }
@@ -172,9 +197,9 @@ const ProductsAnimated = () => {
       scale: 1,
       y: 0,
       transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15
+        type: "tween", // Changed from spring to tween for more stability
+        duration: 0.5,
+        ease: "easeOut"
       }
     },
     exit: {
@@ -186,12 +211,12 @@ const ProductsAnimated = () => {
       }
     },
     hover: {
-      scale: 1.05,
-      y: -10,
+      scale: 1.03, // Reduced scale effect
+      y: -5, // Reduced y movement
       transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 20
+        type: "tween", // Changed from spring to tween
+        duration: 0.2,
+        ease: "easeOut"
       }
     }
   }
@@ -536,9 +561,8 @@ const ProductsAnimated = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            layout
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {filteredProducts.map((product) => {
                 const stockStatus = getStockStatus(product.stock)
                 
@@ -551,8 +575,6 @@ const ProductsAnimated = () => {
                     animate="visible"
                     exit="exit"
                     whileHover="hover"
-                    layout
-                    layoutId={product.id}
                   >
                     {product.featured && (
                       <motion.div 
@@ -572,7 +594,7 @@ const ProductsAnimated = () => {
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.3 }}
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x250?text=Product+Image'
+                        e.target.src = 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&h=600&fit=crop'
                       }}
                     />
 

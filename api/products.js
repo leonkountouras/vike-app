@@ -9,6 +9,27 @@ const products = new Map() // userId -> [products]
 // Mock products for demo purposes
 const mockProducts = [
   {
+    id: 'mock-13',
+    name: 'Category Placeholder - Service',
+    description: 'Professional service offering for businesses and individuals. This comprehensive service package includes consultation, implementation, and ongoing support to meet your specific needs.',
+    price: 299.99,
+    category: 'Service',
+    stock: 999,
+    sku: 'SRV-001',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1560438718-eb61ede255eb?w=600&h=600&fit=crop',
+    createdAt: new Date('2024-06-30'),
+    updatedAt: new Date('2024-06-30'),
+    featured: true,
+    specifications: {
+      'Service Type': 'Professional',
+      'Duration': 'Ongoing',
+      'Support': '24/7',
+      'Customization': 'Available',
+      'Satisfaction': 'Guaranteed'
+    }
+  },
+  {
     id: 'mock-1',
     name: 'Wireless Bluetooth Headphones',
     description: 'Premium noise-cancelling wireless headphones with 30-hour battery life. Perfect for music lovers and professionals. Features include touch controls, voice assistant support, and a comfortable over-ear design for extended listening sessions.',
@@ -481,6 +502,66 @@ export const getProducts = (req, res) => {
 }
 
 // Get all available categories
+// Delete a category by updating all products in that category to a new category
+export const deleteCategory = (req, res) => {
+  try {
+    const userId = req.user.id
+    const { categoryName, newCategoryName = 'Uncategorized' } = req.body
+    
+    if (!categoryName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category name is required'
+      })
+    }
+    
+    // Initialize mock products for new users
+    if (!products.has(userId)) {
+      products.set(userId, [...mockProducts])
+    }
+    
+    const userProducts = products.get(userId) || []
+    
+    // Check if category exists
+    const categoryExists = userProducts.some(product => product.category === categoryName)
+    if (!categoryExists) {
+      return res.status(404).json({
+        success: false,
+        message: `Category '${categoryName}' not found`
+      })
+    }
+    
+    // Update all products in the category to the new category
+    const updatedProducts = userProducts.map(product => {
+      if (product.category === categoryName) {
+        return { ...product, category: newCategoryName }
+      }
+      return product
+    })
+    
+    // Update the products map
+    products.set(userId, updatedProducts)
+    
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: `Category '${categoryName}' deleted successfully. All products moved to '${newCategoryName}'`,
+      data: {
+        deletedCategory: categoryName,
+        newCategory: newCategoryName,
+        affectedProducts: userProducts.filter(product => product.category === categoryName).length
+      }
+    })
+  } catch (error) {
+    console.error('Error deleting category:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete category',
+      error: error.message
+    })
+  }
+}
+
 export const getCategories = (req, res) => {
   try {
     const userId = req.user.id
@@ -937,11 +1018,71 @@ export const updateProductImage = (req, res) => {
   }
 }
 
+// Public endpoint to get categories without authentication (for public frontend)
+export const getPublicCategories = (req, res) => {
+  try {
+    // For public access, we'll return categories from all products
+    let publicProducts = [...mockProducts]
+    
+    // Add products from all users (including demo user)
+    for (const userProducts of products.values()) {
+      // Only add products that aren't already in the mockProducts array (avoid duplicates)
+      const uniqueUserProducts = userProducts.filter(userProduct => 
+        !mockProducts.some(mockProduct => mockProduct.id === userProduct.id)
+      )
+      publicProducts = [...publicProducts, ...uniqueUserProducts]
+    }
+    
+    // Extract unique categories
+    const categories = ['All', ...new Set(publicProducts
+      .map(product => product.category)
+      .filter(category => category && category.trim() !== '')
+    )].sort()
+    
+    // Calculate product count per category
+    const categoriesWithCount = categories.map(category => {
+      if (category === 'All') {
+        return {
+          name: category,
+          count: publicProducts.length
+        }
+      }
+      return {
+        name: category,
+        count: publicProducts.filter(product => product.category === category).length
+      }
+    })
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        categories: categoriesWithCount
+      }
+    })
+  } catch (error) {
+    console.error('Error getting public categories:', error)
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get categories',
+      error: error.message
+    })
+  }
+}
+
 // Public endpoint to get products without authentication (for public frontend)
 export const getPublicProducts = (req, res) => {
   try {
-    // For public access, we'll return mock products
+    // For public access, we'll return mock products plus any user-created products
     let publicProducts = [...mockProducts]
+    
+    // Add products from all users (including demo user)
+    for (const userProducts of products.values()) {
+      // Only add products that aren't already in the mockProducts array (avoid duplicates)
+      const uniqueUserProducts = userProducts.filter(userProduct => 
+        !mockProducts.some(mockProduct => mockProduct.id === userProduct.id)
+      )
+      publicProducts = [...publicProducts, ...uniqueUserProducts]
+    }
 
     // Apply filters
     const { category, minPrice, maxPrice, sortBy, sortOrder, search } = req.query
