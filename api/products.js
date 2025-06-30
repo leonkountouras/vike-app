@@ -9,6 +9,27 @@ const products = new Map() // userId -> [products]
 // Mock products for demo purposes
 const mockProducts = [
   {
+    id: 'mock-13',
+    name: 'Category Placeholder - Service',
+    description: 'Professional service offering for businesses and individuals. This comprehensive service package includes consultation, implementation, and ongoing support to meet your specific needs.',
+    price: 299.99,
+    category: 'Service',
+    stock: 999,
+    sku: 'SRV-001',
+    status: 'active',
+    image: 'https://images.unsplash.com/photo-1560438718-eb61ede255eb?w=600&h=600&fit=crop',
+    createdAt: new Date('2024-06-30'),
+    updatedAt: new Date('2024-06-30'),
+    featured: true,
+    specifications: {
+      'Service Type': 'Professional',
+      'Duration': 'Ongoing',
+      'Support': '24/7',
+      'Customization': 'Available',
+      'Satisfaction': 'Guaranteed'
+    }
+  },
+  {
     id: 'mock-1',
     name: 'Wireless Bluetooth Headphones',
     description: 'Premium noise-cancelling wireless headphones with 30-hour battery life. Perfect for music lovers and professionals. Features include touch controls, voice assistant support, and a comfortable over-ear design for extended listening sessions.',
@@ -940,8 +961,17 @@ export const updateProductImage = (req, res) => {
 // Public endpoint to get products without authentication (for public frontend)
 export const getPublicProducts = (req, res) => {
   try {
-    // For public access, we'll return mock products
+    // For public access, we'll return mock products plus any user-created products
     let publicProducts = [...mockProducts]
+    
+    // Add products from all users (including demo user)
+    for (const userProducts of products.values()) {
+      // Only add products that aren't already in the mockProducts array (avoid duplicates)
+      const uniqueUserProducts = userProducts.filter(userProduct => 
+        !mockProducts.some(mockProduct => mockProduct.id === userProduct.id)
+      )
+      publicProducts = [...publicProducts, ...uniqueUserProducts]
+    }
 
     // Apply filters
     const { category, minPrice, maxPrice, sortBy, sortOrder, search } = req.query
