@@ -36,10 +36,13 @@
 ### Public Endpoints (No Auth Required)
 - **Health Check**: `GET /api/health`
 - **Public Products**: `GET /api/products/public`
+- **Public Categories**: `GET /api/categories/public`
 
 ### Admin Dashboard Endpoints (Auth Required)
 - **Login**: `POST /api/auth/login`
 - **Products**: `GET /api/products`
+- **Categories**: `GET /api/products/categories`
+- **Delete Category**: `DELETE /api/products/categories`
 - **Users**: `GET /api/users`
 - **Todos**: `GET /api/todos`
 
@@ -199,6 +202,10 @@ curl "https://work-2-qrsolblshsmgtweg.prod-runtime.all-hands.dev/api/products/pu
 - [x] Resolved ad blocker issues by replacing placeholder.com images with Unsplash images
 - [x] Improved error handling in authentication flow
 - [x] Optimized animation performance for smoother transitions
+- [x] Added "Service" category product to display in frontend
+- [x] Implemented category management functionality with dedicated API endpoints
+- [x] Frontend now fetches categories from backend API instead of extracting them from products
+- [x] Added ability to delete categories in the backend
 
 ---
 
