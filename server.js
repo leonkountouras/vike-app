@@ -45,7 +45,7 @@ import {
   upload 
 } from './api/products.js'
 
-const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = true // Force production mode to avoid WebSocket issues
 const port = process.env.PORT || 12001
 
 async function startServer() {
@@ -151,9 +151,18 @@ async function startServer() {
     // In production, serve static files
     app.use(express.static('dist/client'))
   } else {
-    // In development, use Vite dev server
+    // In development, use Vite dev server with proper WebSocket configuration
     vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        host: '0.0.0.0',
+        hmr: false,
+        cors: true,
+        strictPort: true,
+        watch: {
+          usePolling: true
+        }
+      },
       appType: 'custom',
       root: __dirname
     })

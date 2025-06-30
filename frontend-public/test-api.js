@@ -1,5 +1,5 @@
 // Simple test to verify API connectivity
-const API_BASE_URL = 'http://localhost:12001';
+const API_BASE_URL = 'https://work-2-qrsolblshsmgtweg.prod-runtime.all-hands.dev';
 
 async function testAPI() {
   try {

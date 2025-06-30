@@ -22,5 +22,5 @@ app.get('*', (req, res) => {
 const port = 12000
 app.listen(port, '0.0.0.0', () => {
   console.log(`Frontend server running at http://localhost:${port}`)
-  console.log(`Frontend accessible at https://work-1-rirxnbteyrbpoqui.prod-runtime.all-hands.dev`)
+  console.log(`Frontend accessible at https://work-1-qrsolblshsmgtweg.prod-runtime.all-hands.dev`)
 })

@@ -18,13 +18,19 @@ export const AuthProvider = ({ children }) => {
   // Validate token with server
   const validateToken = async (token) => {
     try {
-      const response = await fetch('/api/auth/profile', {
+      // Use absolute URL with the current origin
+      const apiUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/api/auth/profile`
+        : '/api/auth/profile';
+        
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       return response.ok
     } catch (error) {
+      console.error('Token validation error:', error);
       return false
     }
   }
@@ -38,33 +44,61 @@ export const AuthProvider = ({ children }) => {
       
       if (savedToken && savedUser) {
         try {
+          // Set a timeout to prevent infinite loading
+          const timeoutId = setTimeout(() => {
+            console.log('Token validation timed out, clearing stored data')
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            setLoading(false)
+          }, 5000) // 5 second timeout
+          
           // Validate token with server
-          validateToken(savedToken).then(isValid => {
-            if (isValid) {
-              setToken(savedToken)
-              setUser(JSON.parse(savedUser))
-            } else {
-              console.log('Token is invalid, clearing stored data')
+          validateToken(savedToken)
+            .then(isValid => {
+              clearTimeout(timeoutId) // Clear the timeout
+              if (isValid) {
+                setToken(savedToken)
+                setUser(JSON.parse(savedUser))
+              } else {
+                console.log('Token is invalid, clearing stored data')
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+              }
+              setLoading(false)
+            })
+            .catch(err => {
+              clearTimeout(timeoutId) // Clear the timeout
+              console.error('Error validating token:', err)
               localStorage.removeItem('token')
               localStorage.removeItem('user')
-            }
-            setLoading(false)
-          })
-          return // Don't set loading to false here, wait for validation
+              setLoading(false)
+            })
+          
+          // Don't set loading to false here, wait for validation or timeout
+          return
         } catch (error) {
           console.error('Error parsing saved user data:', error)
           // Clear invalid data
           localStorage.removeItem('token')
           localStorage.removeItem('user')
+          setLoading(false)
         }
+      } else {
+        setLoading(false)
       }
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      // Use absolute URL with the current origin
+      const apiUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/api/auth/login`
+        : '/api/auth/login';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +129,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-      const response = await fetch('/api/auth/register', {
+      // Use absolute URL with the current origin
+      const apiUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/api/auth/register`
+        : '/api/auth/register';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

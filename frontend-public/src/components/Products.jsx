@@ -213,7 +213,7 @@ const Products = () => {
   }
 
   // Backend API URL - using runtime URL for production access
-  const API_BASE_URL = 'https://work-2-rirxnbteyrbpoqui.prod-runtime.all-hands.dev'
+  const API_BASE_URL = 'https://work-2-qrsolblshsmgtweg.prod-runtime.all-hands.dev'
 
   useEffect(() => {
     fetchProducts()

@@ -1,7 +1,7 @@
 import { onRenderHtml } from "vike-react/__internal/integration/onRenderHtml";
 import { jsxs, jsx, Fragment } from "react/jsx-runtime";
 import "react";
-import { u as useAuth, A as AuthProvider, L as Layout } from "../chunks/chunk-BNTQHHVj.js";
+import { u as useAuth, A as AuthProvider, L as Layout } from "../chunks/chunk-CujXscRp.js";
 import import5 from "vike-react/__internal/integration/Loading";
 /* empty css                       */
 /*! pages/index/+Page.jsx [vike:pluginModuleBanner] */
