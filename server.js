@@ -38,8 +38,10 @@ import {
   getProduct, 
   getProductStats,
   getCategories,
+  deleteCategory,
   updateProductImage,
   getPublicProducts,
+  getPublicCategories,
   validateProduct,
   validateProductUpdate,
   upload 
@@ -116,8 +118,9 @@ async function startServer() {
   app.delete('/api/todos/:id', authenticateToken, deleteTodo)
   app.patch('/api/todos/:id/toggle', authenticateToken, toggleTodo)
 
-  // Public product route (no authentication required)
+  // Public routes (no authentication required)
   app.get('/api/products/public', getPublicProducts)
+  app.get('/api/categories/public', getPublicCategories)
   
   // Product routes (all protected)
   app.get('/api/products', authenticateToken, getProducts)
@@ -127,6 +130,7 @@ async function startServer() {
   ]), validateProduct, createProduct)
   app.get('/api/products/stats', authenticateToken, getProductStats)
   app.get('/api/products/categories', authenticateToken, getCategories)
+  app.delete('/api/products/categories', authenticateToken, deleteCategory)
   app.get('/api/products/:id', authenticateToken, getProduct)
   app.put('/api/products/:id', authenticateToken, upload.fields([
     { name: 'featuredImage', maxCount: 1 },
