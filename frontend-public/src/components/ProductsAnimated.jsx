@@ -14,43 +14,66 @@ const ProductsAnimated = () => {
   const API_BASE_URL = 'https://work-2-qrsolblshsmgtweg.prod-runtime.all-hands.dev'
 
   useEffect(() => {
-    fetchProducts()
+    fetchProductsAndCategories()
   }, [])
 
   useEffect(() => {
     filterProducts()
   }, [products, selectedCategory, searchTerm])
 
-  const fetchProducts = async () => {
+  const fetchProductsAndCategories = async () => {
     try {
       setLoading(true)
       setError('')
       
-      const response = await fetch(`${API_BASE_URL}/api/products/public`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+      // Fetch products and categories in parallel
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/products/public`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`${API_BASE_URL}/api/categories/public`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
       
-      if (!response.ok) {
+      // Handle products response
+      if (!productsResponse.ok) {
         throw new Error('Failed to fetch products')
       }
       
-      const data = await response.json()
+      const productsData = await productsResponse.json()
       
-      if (data.success) {
-        const productList = data.data.products || []
+      if (productsData.success) {
+        const productList = productsData.data.products || []
         setProducts(productList)
+      } else {
+        setError(productsData.message || 'Failed to load products')
+      }
+      
+      // Handle categories response
+      if (categoriesResponse.ok) {
+        const categoriesData = await categoriesResponse.json()
         
-        // Extract unique categories
+        if (categoriesData.success) {
+          const categoryList = categoriesData.data.categories || []
+          const categoryNames = categoryList.map(cat => cat.name)
+          setCategories(categoryNames)
+        }
+      } else {
+        console.error('Failed to fetch categories, falling back to extracting from products')
+        // Fallback: Extract categories from products
+        const productList = productsData.success ? productsData.data.products || [] : []
         const uniqueCategories = ['All', ...new Set(productList.map(p => p.category))]
         setCategories(uniqueCategories)
-      } else {
-        setError(data.message || 'Failed to load products')
       }
     } catch (err) {
-      console.error('Error fetching products:', err)
+      console.error('Error fetching data:', err)
       // For demo purposes, let's use mock data if the API fails
       const mockProducts = getMockProducts()
       setProducts(mockProducts)
