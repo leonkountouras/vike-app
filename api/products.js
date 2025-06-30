@@ -526,9 +526,14 @@ export const createProduct = (req, res) => {
     // Check validation errors
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-      // Delete uploaded file if validation fails
-      if (req.file) {
-        fs.unlinkSync(req.file.path)
+      // Delete uploaded files if validation fails
+      if (req.files) {
+        if (req.files.featuredImage) {
+          req.files.featuredImage.forEach(file => fs.unlinkSync(file.path));
+        }
+        if (req.files.additionalImages) {
+          req.files.additionalImages.forEach(file => fs.unlinkSync(file.path));
+        }
       }
       return res.status(400).json({
         success: false,
@@ -538,18 +543,42 @@ export const createProduct = (req, res) => {
     }
 
     const userId = req.user.id
-    const { name, description, price, category, sku, stock = 0, status = 'active' } = req.body
+    const { name, description, price, category, sku, stock = 0, status = 'active', featuredImageIndex = 0 } = req.body
 
     // Check if SKU already exists for this user
     const userProducts = products.get(userId) || []
     if (sku && userProducts.some(product => product.sku === sku)) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path)
+      // Delete uploaded files if SKU exists
+      if (req.files) {
+        if (req.files.featuredImage) {
+          req.files.featuredImage.forEach(file => fs.unlinkSync(file.path));
+        }
+        if (req.files.additionalImages) {
+          req.files.additionalImages.forEach(file => fs.unlinkSync(file.path));
+        }
       }
       return res.status(400).json({
         success: false,
         message: 'SKU already exists'
       })
+    }
+
+    // Process images
+    let featuredImage = null;
+    const additionalImages = [];
+
+    if (req.files) {
+      // Handle featured image
+      if (req.files.featuredImage && req.files.featuredImage.length > 0) {
+        featuredImage = `/uploads/products/${req.files.featuredImage[0].filename}`;
+      }
+
+      // Handle additional images
+      if (req.files.additionalImages) {
+        req.files.additionalImages.forEach(file => {
+          additionalImages.push(`/uploads/products/${file.filename}`);
+        });
+      }
     }
 
     // Create product
@@ -562,7 +591,8 @@ export const createProduct = (req, res) => {
       sku: sku || '',
       stock: parseInt(stock),
       status,
-      image: req.file ? `/uploads/products/${req.file.filename}` : null,
+      image: featuredImage, // Main image (for backward compatibility)
+      images: [featuredImage, ...additionalImages].filter(Boolean), // All images
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       userId
@@ -597,9 +627,14 @@ export const updateProduct = (req, res) => {
     // Check validation errors
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-      // Delete uploaded file if validation fails
-      if (req.file) {
-        fs.unlinkSync(req.file.path)
+      // Delete uploaded files if validation fails
+      if (req.files) {
+        if (req.files.featuredImage) {
+          req.files.featuredImage.forEach(file => fs.unlinkSync(file.path));
+        }
+        if (req.files.additionalImages) {
+          req.files.additionalImages.forEach(file => fs.unlinkSync(file.path));
+        }
       }
       return res.status(400).json({
         success: false,
@@ -617,8 +652,14 @@ export const updateProduct = (req, res) => {
     const productIndex = userProducts.findIndex(product => product.id === productId)
 
     if (productIndex === -1) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path)
+      // Delete uploaded files if product not found
+      if (req.files) {
+        if (req.files.featuredImage) {
+          req.files.featuredImage.forEach(file => fs.unlinkSync(file.path));
+        }
+        if (req.files.additionalImages) {
+          req.files.additionalImages.forEach(file => fs.unlinkSync(file.path));
+        }
       }
       return res.status(404).json({
         success: false,
@@ -631,8 +672,14 @@ export const updateProduct = (req, res) => {
     // Check if SKU already exists for this user (excluding current product)
     if (updates.sku && updates.sku !== existingProduct.sku) {
       if (userProducts.some(product => product.sku === updates.sku && product.id !== productId)) {
-        if (req.file) {
-          fs.unlinkSync(req.file.path)
+        // Delete uploaded files if SKU exists
+        if (req.files) {
+          if (req.files.featuredImage) {
+            req.files.featuredImage.forEach(file => fs.unlinkSync(file.path));
+          }
+          if (req.files.additionalImages) {
+            req.files.additionalImages.forEach(file => fs.unlinkSync(file.path));
+          }
         }
         return res.status(400).json({
           success: false,
@@ -641,17 +688,48 @@ export const updateProduct = (req, res) => {
       }
     }
 
-    // Handle image update
-    let imageUrl = existingProduct.image
-    if (req.file) {
-      // Delete old image if it exists
-      if (existingProduct.image) {
-        const oldImagePath = path.join(process.cwd(), existingProduct.image)
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath)
+    // Process images
+    let featuredImage = existingProduct.image;
+    let productImages = existingProduct.images || [existingProduct.image].filter(Boolean);
+    
+    if (req.files) {
+      // Handle featured image
+      if (req.files.featuredImage && req.files.featuredImage.length > 0) {
+        // Delete old featured image if it exists
+        if (existingProduct.image) {
+          const oldImagePath = path.join(process.cwd(), existingProduct.image)
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath)
+          }
+        }
+        featuredImage = `/uploads/products/${req.files.featuredImage[0].filename}`;
+      }
+
+      // Handle additional images
+      if (req.files.additionalImages && req.files.additionalImages.length > 0) {
+        const newAdditionalImages = req.files.additionalImages.map(file => 
+          `/uploads/products/${file.filename}`
+        );
+        
+        // If we're replacing all images (indicated by a flag in the request)
+        if (updates.replaceAllImages === 'true') {
+          // Delete all old images except the featured one
+          if (existingProduct.images && existingProduct.images.length > 0) {
+            existingProduct.images.forEach(img => {
+              if (img && img !== existingProduct.image) {
+                const oldImagePath = path.join(process.cwd(), img)
+                if (fs.existsSync(oldImagePath)) {
+                  fs.unlinkSync(oldImagePath)
+                }
+              }
+            });
+          }
+          productImages = [featuredImage, ...newAdditionalImages].filter(Boolean);
+        } else {
+          // Add new images to existing ones
+          productImages = [...productImages, ...newAdditionalImages].filter(Boolean);
         }
       }
-      imageUrl = `/uploads/products/${req.file.filename}`
     }
 
     // Convert numeric fields
@@ -662,7 +740,8 @@ export const updateProduct = (req, res) => {
     const updatedProduct = {
       ...existingProduct,
       ...updates,
-      image: imageUrl,
+      image: featuredImage, // Main image (for backward compatibility)
+      images: productImages, // All images
       updatedAt: new Date().toISOString()
     }
 
@@ -851,6 +930,97 @@ export const updateProductImage = (req, res) => {
     if (req.file) {
       fs.unlinkSync(req.file.path)
     }
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    })
+  }
+}
+
+// Public endpoint to get products without authentication (for public frontend)
+export const getPublicProducts = (req, res) => {
+  try {
+    // For public access, we'll return mock products
+    let publicProducts = [...mockProducts]
+
+    // Apply filters
+    const { category, minPrice, maxPrice, sortBy, sortOrder, search } = req.query
+
+    // Filter by category
+    if (category && category !== 'all') {
+      publicProducts = publicProducts.filter(product => 
+        product.category.toLowerCase() === category.toLowerCase()
+      )
+    }
+
+    // Filter by price range
+    if (minPrice) {
+      publicProducts = publicProducts.filter(product => product.price >= parseFloat(minPrice))
+    }
+    if (maxPrice) {
+      publicProducts = publicProducts.filter(product => product.price <= parseFloat(maxPrice))
+    }
+
+    // Filter by search term
+    if (search) {
+      const searchTerm = search.toLowerCase()
+      publicProducts = publicProducts.filter(product =>
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description.toLowerCase().includes(searchTerm) ||
+        product.category.toLowerCase().includes(searchTerm) ||
+        product.sku.toLowerCase().includes(searchTerm)
+      )
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      publicProducts.sort((a, b) => {
+        let aValue, bValue
+        
+        switch (sortBy) {
+          case 'price':
+            aValue = a.price
+            bValue = b.price
+            break
+          case 'name':
+            aValue = a.name.toLowerCase()
+            bValue = b.name.toLowerCase()
+            break
+          case 'category':
+            aValue = a.category.toLowerCase()
+            bValue = b.category.toLowerCase()
+            break
+          case 'stock':
+            aValue = a.stock
+            bValue = b.stock
+            break
+          case 'createdAt':
+          default:
+            aValue = new Date(a.createdAt)
+            bValue = new Date(b.createdAt)
+            break
+        }
+
+        if (sortOrder === 'desc') {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+        } else {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+        }
+      })
+    } else {
+      // Default sort by creation date (newest first)
+      publicProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    }
+
+    res.json({
+      success: true,
+      data: { 
+        products: publicProducts,
+        total: publicProducts.length
+      }
+    })
+  } catch (error) {
+    console.error('Get public products error:', error)
     res.status(500).json({
       success: false,
       message: 'Internal server error'

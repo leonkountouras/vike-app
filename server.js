@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { createServer as createViteServer } from 'vite'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -38,16 +39,20 @@ import {
   getProductStats,
   getCategories,
   updateProductImage,
+  getPublicProducts,
   validateProduct,
   validateProductUpdate,
   upload 
 } from './api/products.js'
 
-const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = true // Force production mode to avoid WebSocket issues
 const port = process.env.PORT || 12001
 
 async function startServer() {
   const app = express()
+
+  // Trust proxy for rate limiting
+  app.set('trust proxy', 1)
 
   // Security middleware
   app.use(helmet({
@@ -55,14 +60,15 @@ async function startServer() {
     crossOriginEmbedderPolicy: false
   }))
 
-  // Rate limiting
+  // Rate limiting with proper proxy configuration
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
     message: {
       success: false,
       message: 'Too many requests, please try again later'
-    }
+    },
+    trustProxy: true
   })
   app.use('/api/', limiter)
 
@@ -110,15 +116,27 @@ async function startServer() {
   app.delete('/api/todos/:id', authenticateToken, deleteTodo)
   app.patch('/api/todos/:id/toggle', authenticateToken, toggleTodo)
 
+  // Public product route (no authentication required)
+  app.get('/api/products/public', getPublicProducts)
+  
   // Product routes (all protected)
   app.get('/api/products', authenticateToken, getProducts)
-  app.post('/api/products', authenticateToken, upload.single('image'), validateProduct, createProduct)
+  app.post('/api/products', authenticateToken, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 10 }
+  ]), validateProduct, createProduct)
   app.get('/api/products/stats', authenticateToken, getProductStats)
   app.get('/api/products/categories', authenticateToken, getCategories)
   app.get('/api/products/:id', authenticateToken, getProduct)
-  app.put('/api/products/:id', authenticateToken, upload.single('image'), validateProductUpdate, updateProduct)
+  app.put('/api/products/:id', authenticateToken, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 10 }
+  ]), validateProductUpdate, updateProduct)
   app.delete('/api/products/:id', authenticateToken, deleteProduct)
-  app.patch('/api/products/:id/image', authenticateToken, upload.single('image'), updateProductImage)
+  app.patch('/api/products/:id/image', authenticateToken, upload.fields([
+    { name: 'featuredImage', maxCount: 1 },
+    { name: 'additionalImages', maxCount: 10 }
+  ]), updateProductImage)
 
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'))
@@ -128,17 +146,27 @@ async function startServer() {
     res.sendFile(path.join(__dirname, 'test-login.html'))
   })
 
+  let vite
   if (isProduction) {
     // In production, serve static files
     app.use(express.static('dist/client'))
   } else {
-    // In development, use Vite's dev server
-    const { createServer } = await import('vite')
-    const viteDevServer = await createServer({
-      server: { middlewareMode: true },
-      appType: 'custom'
+    // In development, use Vite dev server with proper WebSocket configuration
+    vite = await createViteServer({
+      server: { 
+        middlewareMode: true,
+        host: '0.0.0.0',
+        hmr: false,
+        cors: true,
+        strictPort: true,
+        watch: {
+          usePolling: true
+        }
+      },
+      appType: 'custom',
+      root: __dirname
     })
-    app.use(viteDevServer.middlewares)
+    app.use(vite.middlewares)
   }
 
   // Vike middleware
@@ -146,6 +174,11 @@ async function startServer() {
     try {
       const pageContextInit = {
         urlOriginal: req.originalUrl
+      }
+      
+      // In development, pass the Vite instance to renderPage
+      if (!isProduction && vite) {
+        pageContextInit.viteDevServer = vite
       }
       
       const pageContext = await renderPage(pageContextInit)

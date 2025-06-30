@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../components/AuthContext'
 import Layout from '../../components/Layout'
 import '../../styles/responsive.css'
@@ -389,12 +390,17 @@ export default function ProductsPage() {
   const { isAuthenticated, loading: authLoading, getAuthHeaders, handleApiError } = useAuth()
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
     if (!authLoading && !isAuthenticated) {
+      console.log('Not authenticated, redirecting to login...')
       window.location.href = '/login'
       return
     }
 
     if (isAuthenticated) {
+      console.log('Authenticated, loading products...')
       // Parse URL parameters
       const urlParams = new URLSearchParams(window.location.search)
       const initialFilters = {
@@ -520,7 +526,27 @@ export default function ProductsPage() {
     return { text: 'In Stock', style: styles.stockInStock }
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
+    return (
+      <Layout>
+        <div style={styles.loading}>
+          <div>🔐 Checking authentication...</div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Layout>
+        <div style={styles.loading}>
+          <div>🔄 Redirecting to login...</div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (loading) {
     return (
       <Layout>
         <div style={styles.loading}>
@@ -546,14 +572,31 @@ export default function ProductsPage() {
 
   return (
     <Layout>
-      <div style={styles.container} className="products-container">
+      <div 
+        style={styles.container} 
+        className="products-container"
+      >
         {/* Header */}
-        <div style={styles.header} className="products-header">
+        <div 
+          style={styles.header} 
+          className="products-header"
+        >
           <div>
-            <h1 style={styles.title} className="products-title">🛍️ Product Catalog</h1>
-            <p style={styles.subtitle}>Browse and filter your product inventory</p>
+            <h1 
+              style={styles.title} 
+              className="products-title"
+            >
+              🛍️ Product Catalog
+            </h1>
+            <p 
+              style={styles.subtitle}
+            >
+              Browse and filter your product inventory
+            </p>
           </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div 
+            style={{ display: 'flex', gap: '1rem' }}
+          >
             <button 
               style={styles.createButton}
               onClick={() => window.location.href = '/products/create'}
@@ -676,6 +719,78 @@ export default function ProductsPage() {
           )}
         </div>
 
+        {/* Product Statistics */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            flex: '1',
+            backgroundColor: '#2196f3',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(33, 150, 243, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              {products.length}
+            </div>
+            <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+              PRODUCTS
+            </div>
+          </div>
+          
+          <div style={{
+            flex: '1',
+            backgroundColor: '#8bc34a',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(139, 195, 74, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              {categories.length}
+            </div>
+            <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+              CATEGORIES
+            </div>
+          </div>
+          
+          <div style={{
+            flex: '1',
+            backgroundColor: '#424242',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white',
+            textAlign: 'center',
+            boxShadow: '0 8px 20px rgba(66, 66, 66, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              {products.reduce((total, product) => total + (product.stock || 0), 0)}
+            </div>
+            <div style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+              TOTAL STOCK
+            </div>
+          </div>
+        </div>
+        
         {/* Results Header */}
         <div style={styles.resultsHeader}>
           <div style={styles.resultsCount}>
@@ -711,18 +826,30 @@ export default function ProductsPage() {
             )}
           </div>
         ) : (
-          <div style={styles.productsGrid} className="products-grid">
-            {products.map(product => {
-              const stockStatus = getStockStatus(product.stock)
-              return (
-                <div
-                  key={product.id}
-                  style={styles.productCard}
-                  className="product-card"
-                  onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.productCardHover)}
-                  onMouseLeave={(e) => Object.assign(e.currentTarget.style, styles.productCard)}
-                  onClick={() => window.location.href = `/products/${product.id}`}
-                >
+          <div 
+            style={styles.productsGrid} 
+            className="products-grid"
+          >
+            <AnimatePresence mode="wait">
+              {products.map((product, index) => {
+                const stockStatus = getStockStatus(product.stock)
+                return (
+                  <motion.div
+                    key={product.id}
+                    style={styles.productCard}
+                    className="product-card"
+                    onClick={() => window.location.href = `/products/${product.id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ 
+                      duration: 0.3, 
+                      delay: index * 0.05,
+                      ease: "easeOut"
+                    }}
+                    layout
+                    layoutId={`product-${product.id}`}
+                  >
                   {product.featured && (
                     <div style={styles.featuredBadge}>⭐ Featured</div>
                   )}
@@ -787,9 +914,10 @@ export default function ProductsPage() {
                       </button>
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>

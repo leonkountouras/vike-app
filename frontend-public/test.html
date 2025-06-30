@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connectivity Test</h1>
+    <div id="result">Testing...</div>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                console.log('Testing API connection...');
+                const response = await fetch('http://localhost:12001/api/products/public');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const result = {
+                    success: data.success,
+                    productCount: data.data?.products?.length || 0,
+                    firstProduct: data.data?.products?.[0]?.name || 'None'
+                };
+                
+                resultDiv.innerHTML = `
+                    <h2>✅ API Test Successful!</h2>
+                    <p><strong>Success:</strong> ${result.success}</p>
+                    <p><strong>Product Count:</strong> ${result.productCount}</p>
+                    <p><strong>First Product:</strong> ${result.firstProduct}</p>
+                `;
+                
+                console.log('API Response:', result);
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2>❌ API Test Failed!</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+                console.error('API Test Failed:', error.message);
+            }
+        }
+        
+        // Run the test when page loads
+        testAPI();
+    </script>
+</body>
+</html>

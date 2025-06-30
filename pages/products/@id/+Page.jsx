@@ -71,6 +71,32 @@ const styles = {
   productImageHover: {
     transform: 'scale(1.02)'
   },
+  thumbnailsContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginTop: '15px',
+    justifyContent: 'center'
+  },
+  thumbnailItem: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    position: 'relative',
+    border: '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  thumbnailSelected: {
+    border: '2px solid #3498db',
+    boxShadow: '0 0 0 2px rgba(52, 152, 219, 0.5)'
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover'
+  },
   featuredBadge: {
     position: 'absolute',
     top: '1rem',
@@ -367,6 +393,8 @@ export default function ProductDetailPage() {
   const [showImageModal, setShowImageModal] = useState(false)
   const [hoveredDetail, setHoveredDetail] = useState(null)
   const [hoveredImage, setHoveredImage] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [productImages, setProductImages] = useState([])
 
   useEffect(() => {
     // Get product ID from URL on client side
@@ -403,8 +431,28 @@ export default function ProductDetailPage() {
       const data = await response.json()
 
       if (data.success) {
-        setProduct(data.data.product)
-        fetchRelatedProducts(data.data.product.category)
+        const productData = data.data.product;
+        setProduct(productData);
+        
+        // Process product images
+        const images = [];
+        
+        // Add main image if it exists
+        if (productData.image) {
+          images.push(productData.image);
+        }
+        
+        // Add additional images if they exist
+        if (productData.images && productData.images.length > 0) {
+          // Skip the first image if it's the same as the main image
+          const additionalImages = productData.images.filter(img => img !== productData.image);
+          images.push(...additionalImages);
+        }
+        
+        setProductImages(images);
+        setSelectedImageIndex(0); // Set the main image as selected
+        
+        fetchRelatedProducts(productData.category);
       } else {
         setError(data.message || 'Failed to fetch product')
       }
@@ -552,15 +600,16 @@ export default function ProductDetailPage() {
         </div>
 
         <div style={styles.productContainer}>
-          {/* Product Image */}
+
+{/* Product Image */}
           <div style={styles.imageSection}>
             {product.featured && (
               <div style={styles.featuredBadge}>✨ Featured</div>
             )}
-            
-            {product.image ? (
-              <img 
-                src={product.image} 
+
+            {productImages.length > 0 ? (
+              <img
+                src={productImages[selectedImageIndex]}
                 alt={product.name}
                 style={{
                   ...styles.productImage,
@@ -577,9 +626,32 @@ export default function ProductDetailPage() {
             ) : null}
             <div style={{
               ...styles.imagePlaceholder,
-              display: product.image ? 'none' : 'flex'
+              display: productImages.length > 0 ? 'none' : 'flex'
             }}>
               📦
+            </div>
+            
+            {/* Thumbnails */}
+            {productImages.length > 1 && (
+              <div style={styles.thumbnailsContainer}>
+                {productImages.map((image, index) => (
+                  <div 
+                    key={index}
+                    style={{
+                      ...styles.thumbnailItem,
+                      ...(index === selectedImageIndex ? styles.thumbnailSelected : {})
+                    }}
+                    onClick={() => setSelectedImageIndex(index)}
+                  >
+                    <img 
+                      src={image} 
+                      alt={`${product.name} - Image ${index + 1}`} 
+                      style={styles.thumbnailImage} 
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             </div>
           </div>
 
@@ -744,14 +816,13 @@ export default function ProductDetailPage() {
         {showImageModal && (
           <div style={styles.imageModal} onClick={() => setShowImageModal(false)}>
             <button style={styles.closeModalButton} onClick={() => setShowImageModal(false)}>✕</button>
-            <img 
-              src={product.image} 
+            <img
+              src={productImages[selectedImageIndex]}
               alt={product.name}
               style={styles.modalImage}
             />
           </div>
         )}
-      </div>
     </Layout>
   )
 }

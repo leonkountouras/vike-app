@@ -155,28 +155,96 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="wp-login-container">
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      background: '#f5f5f5',
+      padding: '20px'
+    }}>
       {/* Skip link for keyboard users */}
       <a href="#main-content" className="wp-skip-link">Skip to main content</a>
       
-      <div className="wp-login-form" id="main-content">
-        <div className="wp-login-logo" aria-hidden="true">
-          <h2 style={{ margin: 0, color: 'var(--wp-primary)' }}>VikePress</h2>
+      <div style={{
+        width: '100%',
+        maxWidth: '500px',
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+        padding: '40px',
+        position: 'relative'
+      }} id="main-content">
+        {/* Credentials Box */}
+        <div style={{
+          backgroundColor: '#8BC34A',
+          borderRadius: '15px',
+          padding: '20px',
+          color: 'white',
+          marginBottom: '30px',
+          position: 'relative'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+            <div style={{ width: '120px', fontWeight: 'bold', fontSize: '18px' }}>Username:</div>
+            <div style={{ fontSize: '18px' }}>AncoraThemes</div>
+            <div style={{ marginLeft: 'auto' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="5" width="14" height="14" rx="2" stroke="white" strokeWidth="2"/>
+              </svg>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ width: '120px', fontWeight: 'bold', fontSize: '18px' }}>Password:</div>
+            <div style={{ fontSize: '18px' }}>QWERTY987</div>
+            <div style={{ marginLeft: 'auto' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="5" width="14" height="14" rx="2" stroke="white" strokeWidth="2"/>
+              </svg>
+            </div>
+          </div>
         </div>
         
-        <h1 className="wp-login-title">Log In</h1>
-        
         <form onSubmit={handleSubmit} noValidate aria-label="Login form">
-          <div className="wp-form-group">
-            <label htmlFor="email" className="wp-form-label">Email Address</label>
+          <h2 style={{ 
+            fontSize: '24px', 
+            fontWeight: 'bold', 
+            marginBottom: '20px',
+            color: '#333'
+          }}>
+            Username or Email Address
+          </h2>
+          
+          <div style={{ position: 'relative', marginBottom: '30px' }}>
+            <div style={{ 
+              position: 'absolute', 
+              left: '20px', 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              color: '#888'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="#888" strokeWidth="2"/>
+                <path d="M5 18C5 15.7909 6.79086 14 9 14H15C17.2091 14 19 15.7909 19 18V20H5V18Z" stroke="#888" strokeWidth="2"/>
+              </svg>
+            </div>
+            
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`wp-login-input ${errors.email ? 'wp-input-error' : ''}`}
-              placeholder="Email Address"
+              style={{
+                width: '100%',
+                padding: '15px 15px 15px 55px',
+                borderRadius: '50px',
+                border: '1px solid #ddd',
+                fontSize: '16px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Username or Email"
               disabled={loading}
               aria-invalid={errors.email ? 'true' : 'false'}
               aria-describedby={errors.email ? 'email-error' : undefined}
@@ -186,10 +254,16 @@ export default function LoginPage() {
               maxLength={100}
               aria-required="true"
             />
+            
             {errors.email && (
               <div 
                 id="email-error" 
-                className="wp-notice wp-notice-error" 
+                style={{
+                  color: '#e53935',
+                  fontSize: '14px',
+                  marginTop: '5px',
+                  paddingLeft: '15px'
+                }}
                 role="alert"
               >
                 {errors.email}
@@ -197,15 +271,45 @@ export default function LoginPage() {
             )}
           </div>
 
-          <div className="wp-form-group">
-            <label htmlFor="password" className="wp-form-label">Password</label>
+          <h2 style={{ 
+            fontSize: '24px', 
+            fontWeight: 'bold', 
+            marginBottom: '20px',
+            color: '#333'
+          }}>
+            Password
+          </h2>
+          
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div style={{ 
+              position: 'absolute', 
+              left: '20px', 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              color: '#888'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="11" width="14" height="10" rx="2" stroke="#888" strokeWidth="2"/>
+                <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11" stroke="#888" strokeWidth="2"/>
+                <circle cx="12" cy="16" r="2" fill="#888"/>
+              </svg>
+            </div>
+            
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`wp-login-input ${errors.password ? 'wp-input-error' : ''}`}
+              style={{
+                width: '100%',
+                padding: '15px 15px 15px 55px',
+                borderRadius: '50px',
+                border: '1px solid #ddd',
+                fontSize: '16px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
               placeholder="Password"
               disabled={loading}
               aria-invalid={errors.password ? 'true' : 'false'}
@@ -216,10 +320,30 @@ export default function LoginPage() {
               maxLength={50}
               aria-required="true"
             />
+            
+            <div style={{ 
+              position: 'absolute', 
+              right: '20px', 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              color: '#888',
+              cursor: 'pointer'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="#888" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" stroke="#888" strokeWidth="2"/>
+              </svg>
+            </div>
+            
             {errors.password && (
               <div 
                 id="password-error" 
-                className="wp-notice wp-notice-error" 
+                style={{
+                  color: '#e53935',
+                  fontSize: '14px',
+                  marginTop: '5px',
+                  paddingLeft: '15px'
+                }}
                 role="alert"
               >
                 {errors.password}
@@ -227,33 +351,74 @@ export default function LoginPage() {
             )}
           </div>
 
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            marginBottom: '30px'
+          }}>
+            <input
+              type="checkbox"
+              id="remember"
+              style={{
+                width: '20px',
+                height: '20px',
+                marginRight: '10px'
+              }}
+            />
+            <label htmlFor="remember" style={{ color: '#888', fontSize: '16px' }}>
+              Remember Me
+            </label>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="wp-login-button"
+            style={{
+              width: '100%',
+              padding: '15px',
+              borderRadius: '50px',
+              backgroundColor: '#1565C0',
+              color: 'white',
+              border: 'none',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              marginBottom: '20px'
+            }}
             aria-busy={loading ? 'true' : 'false'}
             aria-disabled={loading ? 'true' : 'false'}
           >
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? 'Logging in...' : 'LOG IN'}
           </button>
 
           {message && (
             <div 
-              className={message.includes('successful') ? "wp-notice wp-notice-success" : "wp-notice wp-notice-error"} 
+              style={{
+                padding: '10px 15px',
+                borderRadius: '5px',
+                marginBottom: '20px',
+                backgroundColor: message.includes('successful') ? '#e8f5e9' : '#ffebee',
+                color: message.includes('successful') ? '#2e7d32' : '#c62828',
+                fontSize: '14px'
+              }}
               role="alert"
               aria-live="assertive"
             >
               {message}
             </div>
           )}
+          
+          <div style={{ 
+            textAlign: 'center',
+            color: '#888',
+            fontSize: '16px'
+          }}>
+            <a href="#" style={{ color: '#888', textDecoration: 'none' }}>
+              Lost your password?
+            </a>
+          </div>
         </form>
-
-        <div className="wp-login-footer">
-          Don't have an account?{' '}
-          <a href="/register" className="wp-register-link">
-            Register here
-          </a>
-        </div>
       </div>
     </div>
   )

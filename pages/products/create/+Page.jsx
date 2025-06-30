@@ -105,6 +105,90 @@ const styles = {
     opacity: 0,
     cursor: 'pointer'
   },
+  thumbnailsContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginTop: '10px'
+  },
+  thumbnailItem: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    position: 'relative',
+    border: '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover'
+  },
+  thumbnailSelected: {
+    border: '2px solid #28a745',
+    boxShadow: '0 0 0 2px rgba(40, 167, 69, 0.5)'
+  },
+  thumbnailOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0,
+    transition: 'opacity 0.2s ease'
+  },
+  thumbnailOverlayHover: {
+    opacity: 1
+  },
+  thumbnailActions: {
+    display: 'flex',
+    gap: '5px'
+  },
+  thumbnailActionButton: {
+    backgroundColor: 'white',
+    color: '#333',
+    border: 'none',
+    borderRadius: '50%',
+    width: '24px',
+    height: '24px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    fontSize: '12px'
+  },
+  thumbnailAddButton: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '8px',
+    border: '2px dashed #e9ecef',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    color: '#6c757d',
+    fontSize: '24px'
+  },
+  featuredBadge: {
+    position: 'absolute',
+    top: '5px',
+    left: '5px',
+    backgroundColor: '#28a745',
+    color: 'white',
+    fontSize: '10px',
+    padding: '2px 5px',
+    borderRadius: '3px',
+    zIndex: 1
+  },
+  imageUploadContainer: {
+    marginBottom: '20px'
+  },
   buttonContainer: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -221,13 +305,14 @@ export default function CreateProductPage() {
     status: 'active'
   })
   
-  const [imageFile, setImageFile] = useState(null)
-  const [imagePreview, setImagePreview] = useState(null)
+  const [productImages, setProductImages] = useState([])
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [categories, setCategories] = useState([])
   const [newCategory, setNewCategory] = useState('')
+  const [hoveredImageIndex, setHoveredImageIndex] = useState(null)
   
   const { isAuthenticated, loading: authLoading, getAuthHeaders, handleApiError } = useAuth()
   
@@ -272,17 +357,74 @@ export default function CreateProductPage() {
   }
   
   const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setImageFile(file)
-      
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+    
+    files.forEach(file => {
       // Create preview
       const reader = new FileReader()
       reader.onloadend = () => {
-        setImagePreview(reader.result)
+        setProductImages(prevImages => [
+          ...prevImages,
+          {
+            file: file,
+            preview: reader.result
+          }
+        ])
       }
       reader.readAsDataURL(file)
-    }
+    })
+  }
+  
+  const handleMultipleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+    
+    files.forEach(file => {
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProductImages(prevImages => [
+          ...prevImages,
+          {
+            file: file,
+            preview: reader.result
+          }
+        ])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+  
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIndex(index)
+  }
+  
+  const handleRemoveImage = (index, e) => {
+    e.stopPropagation()
+    
+    setProductImages(prevImages => {
+      const newImages = [...prevImages]
+      newImages.splice(index, 1)
+      
+      // Adjust selected index if needed
+      if (selectedImageIndex >= newImages.length) {
+        setSelectedImageIndex(Math.max(0, newImages.length - 1))
+      } else if (index === selectedImageIndex && newImages.length > 0) {
+        // Keep the same selected index unless we removed the selected image
+        setSelectedImageIndex(0)
+      }
+      
+      return newImages
+    })
+  }
+  
+  const handleMouseEnter = (index) => {
+    setHoveredImageIndex(index)
+  }
+  
+  const handleMouseLeave = () => {
+    setHoveredImageIndex(null)
   }
   
   const handleAddCategory = async () => {
@@ -369,9 +511,22 @@ export default function CreateProductPage() {
         formDataObj.append(key, value)
       })
       
-      // Add image if selected
-      if (imageFile) {
-        formDataObj.append('image', imageFile)
+      // Add images if selected
+      if (productImages.length > 0) {
+        // Add the featured image first (the selected one)
+        if (productImages[selectedImageIndex]) {
+          formDataObj.append('featuredImage', productImages[selectedImageIndex].file)
+        }
+        
+        // Add all other images
+        productImages.forEach((img, index) => {
+          if (index !== selectedImageIndex) {
+            formDataObj.append('additionalImages', img.file)
+          }
+        })
+        
+        // Add the selected index as metadata
+        formDataObj.append('featuredImageIndex', selectedImageIndex)
       }
       
       // Submit form
@@ -400,8 +555,8 @@ export default function CreateProductPage() {
         stock: '',
         status: 'active'
       })
-      setImageFile(null)
-      setImagePreview(null)
+      setProductImages([])
+      setSelectedImageIndex(0)
       
       // Redirect to product list after a delay
       setTimeout(() => {
@@ -580,21 +735,93 @@ export default function CreateProductPage() {
             </div>
             
             <div style={styles.formGroup} className="form-group">
-              <label style={styles.label}>Product Image</label>
-              <div style={styles.imagePreview}>
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Preview" style={styles.previewImage} />
-                ) : (
-                  <div style={styles.previewPlaceholder}>
-                    Click or drag to upload an image
+              <label style={styles.label}>Product Images</label>
+              <div style={styles.imageUploadContainer}>
+                <div style={styles.imagePreview}>
+                  {productImages.length > 0 && selectedImageIndex < productImages.length ? (
+                    <img 
+                      src={productImages[selectedImageIndex].preview} 
+                      alt="Featured Preview" 
+                      style={styles.previewImage} 
+                    />
+                  ) : (
+                    <div style={styles.previewPlaceholder}>
+                      <p>Select or upload images to see preview</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleMultipleImageUpload}
+                        style={styles.fileInput}
+                        multiple
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div style={{...styles.formGroup, marginTop: '1rem'}}>
+                  <label style={styles.label}>Featured Image</label>
+                  <p style={{fontSize: '0.9rem', color: '#6c757d', marginBottom: '0.5rem'}}>
+                    Click on an image to set it as the featured image (main product image)
+                  </p>
+                </div>
+                
+                <div style={styles.thumbnailsContainer}>
+                  {productImages.map((image, index) => (
+                    <div 
+                      key={index}
+                      style={{
+                        ...styles.thumbnailItem,
+                        ...(index === selectedImageIndex ? styles.thumbnailSelected : {})
+                      }}
+                      onClick={() => handleThumbnailClick(index)}
+                      onMouseEnter={() => handleMouseEnter(index)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      {index === selectedImageIndex && (
+                        <div style={styles.featuredBadge}>Featured</div>
+                      )}
+                      <img 
+                        src={image.preview} 
+                        alt={`Thumbnail ${index + 1}`} 
+                        style={styles.thumbnailImage} 
+                      />
+                      <div 
+                        style={{
+                          ...styles.thumbnailOverlay,
+                          ...(hoveredImageIndex === index ? styles.thumbnailOverlayHover : {})
+                        }}
+                      >
+                        <div style={styles.thumbnailActions}>
+                          <button 
+                            type="button"
+                            style={styles.thumbnailActionButton}
+                            onClick={(e) => handleRemoveImage(index, e)}
+                            title="Remove image"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <label style={styles.thumbnailAddButton} title="Add more images">
+                    +
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{ display: 'none' }}
+                      multiple
+                    />
+                  </label>
+                </div>
+                
+                {productImages.length > 0 && (
+                  <div style={{marginTop: '1rem', fontSize: '0.9rem', color: '#28a745'}}>
+                    {productImages.length} image(s) selected. The highlighted image will be used as the featured product image.
                   </div>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={styles.fileInput}
-                />
               </div>
             </div>
             

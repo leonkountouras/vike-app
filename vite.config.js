@@ -7,6 +7,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 12001,
-    allowedHosts: true
+    allowedHosts: true,
+    cors: true,
+    hmr: false,
+    watch: {
+      usePolling: true
+    }
+  },
+  optimizeDeps: {
+    force: true
   }
 })
