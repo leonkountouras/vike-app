@@ -571,7 +571,7 @@ const ProductsAnimated = () => {
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.3 }}
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x250?text=Product+Image'
+                        e.target.src = 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&h=600&fit=crop'
                       }}
                     />
 
